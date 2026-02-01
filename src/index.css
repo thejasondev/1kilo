@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@theme {
+  /* Solar Pro - Optimized for Bright Sunlight & Outdoor Use */
+  /* Premium Light Theme logic: High Contrast, Clean, "Medical/Science" aesthetic */
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+:root {
+  /* Base: 'Paper' White for reduced glare compared to #FFF, but high brightness */
+  --background: #f8fafc; /* Slate-50 */
+  --foreground: #020617; /* Slate-950 (Deep Black) */
+
+  /* Surface: Pure White for depth against Slate-50 */
+  --card: #ffffff;
+  --card-foreground: #020617;
+
+  /* Muted: Clear distinction without being washed out */
+  --muted: #f1f5f9; /* Slate-100 */
+  --muted-foreground: #64748b; /* Slate-500 */
+
+  /* Borders: Visible but subtle */
+  --border: #e2e8f0; /* Slate-200 */
+  --input: #e2e8f0;
+
+  /* Primary: Emerald-600 (Darker for Contrast on White) */
+  /* This ensures accessibility under strong sun */
+  --primary: #059669;
+  --primary-foreground: #ffffff;
+
+  /* Secondary: Violet-600 */
+  --secondary: #7c3aed;
+  --secondary-foreground: #ffffff;
+}
+
+/* Optional Dark Mode override if needed in future, but default is now Solar Pro */
+.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #18181b;
+  --card-foreground: #fafafa;
+  --primary: #10b981;
+  --primary-foreground: #022c22;
+}
+
+body {
+  @apply bg-background text-foreground;
+  font-feature-settings:
+    "rlig" 1,
+    "calt" 1;
+}
