@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -7,16 +7,43 @@ import {
   useLocation,
 } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
-import { DiaryPage } from "@/features/diary/DiaryPage";
-import { WorkoutPage } from "@/features/workout/WorkoutPage";
-import { CreateRoutinePage } from "@/features/workout/CreateRoutinePage";
 import { AuthProvider, useAuth } from "@/features/auth/AuthContext";
-import { AuthPage } from "@/features/auth/AuthPage";
-import { OnboardingPage } from "@/features/onboarding/OnboardingPage";
-import { ProfilePage } from "@/features/profile/ProfilePage";
 import { db } from "@/lib/storage/db";
-import { ProgressPage } from "@/features/progress/ProgressPage";
 import { useLiveQuery } from "dexie-react-hooks";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+// Lazy load route components for code splitting
+const DiaryPage = lazy(() =>
+  import("@/features/diary/DiaryPage").then((m) => ({ default: m.DiaryPage })),
+);
+const WorkoutPage = lazy(() =>
+  import("@/features/workout/WorkoutPage").then((m) => ({
+    default: m.WorkoutPage,
+  })),
+);
+const CreateRoutinePage = lazy(() =>
+  import("@/features/workout/CreateRoutinePage").then((m) => ({
+    default: m.CreateRoutinePage,
+  })),
+);
+const ProgressPage = lazy(() =>
+  import("@/features/progress/ProgressPage").then((m) => ({
+    default: m.ProgressPage,
+  })),
+);
+const ProfilePage = lazy(() =>
+  import("@/features/profile/ProfilePage").then((m) => ({
+    default: m.ProfilePage,
+  })),
+);
+const OnboardingPage = lazy(() =>
+  import("@/features/onboarding/OnboardingPage").then((m) => ({
+    default: m.OnboardingPage,
+  })),
+);
+const AuthPage = lazy(() =>
+  import("@/features/auth/AuthPage").then((m) => ({ default: m.AuthPage })),
+);
 
 function LoadingScreen() {
   return (
@@ -29,6 +56,15 @@ function LoadingScreen() {
           <div className="h-full w-1/2 bg-white animate-[translateX_1s_ease-in-out_infinite]" />
         </div>
       </div>
+    </div>
+  );
+}
+
+// Lightweight loading indicator for lazy routes
+function RouteLoader() {
+  return (
+    <div className="flex h-full w-full items-center justify-center p-8">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
     </div>
   );
 }
@@ -77,29 +113,33 @@ function App() {
   }
 
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/auth" element={<AuthPage />} />
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter>
+          <Suspense fallback={<RouteLoader />}>
+            <Routes>
+              <Route path="/auth" element={<AuthPage />} />
 
-          <Route
-            element={
-              <ProtectedRoute>
-                <AppLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/" element={<Navigate to="/diary" replace />} />
-            <Route path="/diary" element={<DiaryPage />} />
-            <Route path="/workout" element={<WorkoutPage />} />
-            <Route path="/workout/create" element={<CreateRoutinePage />} />
-            <Route path="/progress" element={<ProgressPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/onboarding" element={<OnboardingPage />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/" element={<Navigate to="/diary" replace />} />
+                <Route path="/diary" element={<DiaryPage />} />
+                <Route path="/workout" element={<WorkoutPage />} />
+                <Route path="/workout/create" element={<CreateRoutinePage />} />
+                <Route path="/progress" element={<ProgressPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/onboarding" element={<OnboardingPage />} />
+              </Route>
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

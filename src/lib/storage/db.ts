@@ -36,6 +36,23 @@ export interface WeightLog {
   weight: number;
 }
 
+export interface MealEntry {
+  id: string;
+  foodId: string;
+  foodName: string;
+  mealType: "desayuno" | "almuerzo" | "cena" | "merienda";
+  quantity: number;
+  unit: string;
+  grams: number;
+  calories: number;
+  macros: {
+    protein: number;
+    carbs: number;
+    fats: number;
+  };
+  timestamp: string;
+}
+
 export interface DailyLog {
   date: string; // YYYY-MM-DD (PK)
   userId: string;
@@ -45,7 +62,7 @@ export interface DailyLog {
     carbs: number;
     fats: number;
   };
-  foods: any[]; // Array of food items (simplified for now)
+  meals: MealEntry[]; // Array of logged food entries
 }
 
 // Define DB

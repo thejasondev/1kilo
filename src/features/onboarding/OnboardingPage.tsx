@@ -93,10 +93,11 @@ export function OnboardingPage() {
       tdee,
       formData.weeklyRate || 0,
     );
-    // Use Somatotype-aware Macros
+    // Use Somatotype-aware Macros with bodyweight-based protein
     const macros = calculateMacros(
       targetCalories,
       formData.goal,
+      formData.weight,
       formData.somatotype,
     );
 

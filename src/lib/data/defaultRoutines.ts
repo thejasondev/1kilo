@@ -1,49 +1,62 @@
 import type { Routine } from "./routinesDb";
 
+// Default routines assigned during onboarding based on somatotype
 export const DEFAULT_ROUTINES: Record<
   "ectomorph" | "mesomorph" | "endomorph",
   Routine
 > = {
   ectomorph: {
-    id: "ecto-strength-default",
-    name: "Ectomorfo - Fuerza & Masa",
+    id: "ecto-push-a",
+    name: "Ectomorfo - Push (Día A)",
     description:
-      "Rutina enfocada en ejercicios compuestos con pausas largas para maximizar ganancia de masa sin quemar exceso de calorías.",
+      "Pecho, hombros y tríceps. Pesos pesados, descansos largos para máxima fuerza sin quemar exceso de calorías.",
     category: "Ectomorfo",
+    difficulty: "intermediate",
+    estimatedMinutes: 45,
+    restBetweenSets: 150,
     exercises: [
-      { exerciseId: "squat", sets: 3, reps: 6 },
-      { exerciseId: "bench-press", sets: 3, reps: 8 },
+      { exerciseId: "bench-press", sets: 4, reps: 6 },
+      { exerciseId: "incline-db-press", sets: 3, reps: 8 },
       { exerciseId: "overhead-press", sets: 3, reps: 8 },
-      { exerciseId: "deadlift", sets: 2, reps: 5 },
-      { exerciseId: "row", sets: 3, reps: 8 },
+      { exerciseId: "lateral-raise", sets: 3, reps: 12 },
+      { exerciseId: "tricep-extension", sets: 3, reps: 10 },
     ],
   },
   mesomorph: {
-    id: "meso-hypertrophy-default",
-    name: "Mesomorfo - Hipertrofia Balanceada",
+    id: "meso-upper",
+    name: "Mesomorfo - Tren Superior",
     description:
-      "Rutina dividida (Upper/Lower) ideal para ganar masa muscular aprovechando tu capacidad de recuperación.",
+      "Hipertrofia balanceada para pecho, espalda, hombros y brazos. Aprovecha tu buena recuperación.",
     category: "Mesomorfo",
+    difficulty: "intermediate",
+    estimatedMinutes: 55,
+    restBetweenSets: 90,
     exercises: [
-      { exerciseId: "squat", sets: 4, reps: 10 },
-      { exerciseId: "lunge", sets: 3, reps: 12 },
       { exerciseId: "bench-press", sets: 4, reps: 10 },
       { exerciseId: "row", sets: 4, reps: 10 },
-      { exerciseId: "lateral-raise", sets: 3, reps: 15 },
+      { exerciseId: "db-shoulder-press", sets: 3, reps: 12 },
+      { exerciseId: "lat-pulldown", sets: 3, reps: 12 },
+      { exerciseId: "cable-fly", sets: 3, reps: 15 },
+      { exerciseId: "hammer-curl", sets: 3, reps: 12 },
+      { exerciseId: "tricep-extension", sets: 3, reps: 12 },
     ],
   },
   endomorph: {
-    id: "endo-metabolic-default",
-    name: "Endomorfo - Quema Metabólica",
+    id: "endo-fullbody-a",
+    name: "Endomorfo - Full Body A",
     description:
-      "Alta densidad de trabajo, superseries y rangos de repeticiones más altos para elevar el gasto calórico.",
+      "Circuito metabólico con ejercicios compuestos. Descansos cortos para máxima quema calórica.",
     category: "Endomorfo",
+    difficulty: "intermediate",
+    estimatedMinutes: 45,
+    restBetweenSets: 45,
     exercises: [
-      { exerciseId: "squat", sets: 4, reps: 15 },
+      { exerciseId: "goblet-squat", sets: 4, reps: 15 },
       { exerciseId: "push-up", sets: 4, reps: 15 },
-      { exerciseId: "jump-rope", sets: 4, reps: 60 },
-      { exerciseId: "lunge", sets: 3, reps: 20 },
-      { exerciseId: "plank", sets: 3, reps: 60 }, // seconds
+      { exerciseId: "db-row", sets: 4, reps: 12 },
+      { exerciseId: "walking-lunge", sets: 3, reps: 12 },
+      { exerciseId: "mountain-climbers", sets: 3, reps: 30 },
+      { exerciseId: "plank", sets: 3, reps: 45 },
     ],
   },
 };

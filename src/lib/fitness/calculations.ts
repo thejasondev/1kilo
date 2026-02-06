@@ -37,12 +37,77 @@ export const SOMATOTYPES = [
   },
 ];
 
-// Recommended Rates (kg/week)
+// Evidence-based rate limits (kg/week)
+// Sources: CDC, NHS, Healthline research
+export const RATE_LIMITS = {
+  cut: {
+    min: -0.75, // Max safe loss rate
+    max: -0.25, // Minimum meaningful deficit
+    recommended: -0.5,
+    label: "Pérdida",
+  },
+  bulk: {
+    min: 0.1, // Minimum meaningful surplus
+    max: 0.35, // Max for lean gains (avoid excess fat)
+    recommended: 0.25,
+    label: "Ganancia",
+  },
+  maintain: {
+    min: -0.1,
+    max: 0.1,
+    recommended: 0,
+    label: "Mantenimiento",
+  },
+};
+
+// Legacy export for backwards compatibility
 export const RECOMMENDED_RATES = {
   cut: -0.5,
   maintain: 0,
   bulk: 0.25,
 };
+
+// Minimum safe daily calories (WHO guideline)
+export const MIN_SAFE_CALORIES = 1200;
+
+// Check if rate is too aggressive
+export function isAggressiveRate(
+  goal: "cut" | "maintain" | "bulk",
+  rate: number,
+): boolean {
+  if (goal === "cut" && rate < -0.75) return true;
+  if (goal === "bulk" && rate > 0.35) return true;
+  return false;
+}
+
+// Get rate intensity label
+export function getRateIntensity(
+  goal: "cut" | "maintain" | "bulk",
+  rate: number,
+): { label: string; color: string } {
+  if (goal === "cut") {
+    if (rate <= -0.75) return { label: "Agresivo", color: "text-red-500" };
+    if (rate <= -0.5) return { label: "Moderado", color: "text-amber-500" };
+    return { label: "Conservador", color: "text-emerald-500" };
+  }
+  if (goal === "bulk") {
+    if (rate >= 0.35) return { label: "Agresivo", color: "text-red-500" };
+    if (rate >= 0.25) return { label: "Moderado", color: "text-amber-500" };
+    return { label: "Lean", color: "text-emerald-500" };
+  }
+  return { label: "Estable", color: "text-muted-foreground" };
+}
+
+// Calculate weeks to reach target
+export function calculateWeeksToGoal(
+  currentWeight: number,
+  targetWeight: number,
+  weeklyRate: number,
+): number {
+  if (weeklyRate === 0 || currentWeight === targetWeight) return 0;
+  const diff = Math.abs(targetWeight - currentWeight);
+  return Math.ceil(diff / Math.abs(weeklyRate));
+}
 
 export function calculateBMI(weightKg: number, heightCm: number): string {
   if (!weightKg || !heightCm) return "0.0";
@@ -120,42 +185,68 @@ export function calculateProjectedDate(
   return targetDate;
 }
 
+/**
+ * Calculate macronutrient targets using evidence-based approach.
+ *
+ * Protein: Based on bodyweight (g/kg) - scientific standard
+ * - Cut: 2.0 g/kg (preserve muscle during deficit)
+ * - Bulk: 1.8 g/kg (support muscle growth)
+ * - Maintain: 1.6 g/kg (general fitness)
+ *
+ * Fat: 20-35% of calories (essential for hormones)
+ * Carbs: Remaining calories (fuel for activity)
+ */
 export function calculateMacros(
   calories: number,
   goal: "cut" | "maintain" | "bulk",
+  weightKg?: number,
   somatotype?: "ectomorph" | "mesomorph" | "endomorph",
-) {
-  // Default Ratios
-  let ratios = { p: 0.3, c: 0.4, f: 0.3 };
+): { protein: number; carbs: number; fats: number } {
+  // Protein per kg based on goal (scientific evidence)
+  const proteinPerKg: Record<string, number> = {
+    cut: 2.0, // Higher to preserve muscle during deficit
+    bulk: 1.8, // Support muscle protein synthesis
+    maintain: 1.6, // General active adult
+  };
 
-  // Goal Influence (Priority on Protein)
-  if (goal === "cut") ratios = { p: 0.4, c: 0.25, f: 0.35 };
-  if (goal === "bulk") ratios = { p: 0.3, c: 0.5, f: 0.2 };
-
-  // Somatotype Logic (Refines the Carb/Fat split mostly)
-  if (somatotype) {
-    if (somatotype === "ectomorph") {
-      // Can handle more carbs
-      ratios.c += 0.1;
-      ratios.f -= 0.1;
-    } else if (somatotype === "endomorph") {
-      // Less carbs, more fat/protein
-      ratios.c = Math.max(0.1, ratios.c - 0.1);
-      ratios.f += 0.05;
-      ratios.p += 0.05;
-    }
-    // Mesomorph stays roughly balanced
-
-    // Normalize to 1.0 just in case
-    const total = ratios.p + ratios.c + ratios.f;
-    ratios.p /= total;
-    ratios.c /= total;
-    ratios.f /= total;
+  // Fat percentage based on goal and somatotype
+  let fatPercent = 0.25; // Default 25%
+  if (goal === "cut") {
+    fatPercent = 0.3; // Higher fat keeps satiety during deficit
+  } else if (goal === "bulk") {
+    fatPercent = 0.2; // Lower fat, more room for carbs
   }
 
+  // Somatotype adjustments for fat/carb split
+  if (somatotype === "endomorph") {
+    fatPercent = Math.min(0.35, fatPercent + 0.05); // More fat, less carbs
+  } else if (somatotype === "ectomorph") {
+    fatPercent = Math.max(0.15, fatPercent - 0.05); // Less fat, more carbs
+  }
+
+  // Calculate protein from bodyweight if available
+  let proteinGrams: number;
+  if (weightKg && weightKg > 0) {
+    // Evidence-based: g/kg bodyweight
+    proteinGrams = Math.round(weightKg * proteinPerKg[goal]);
+  } else {
+    // Fallback to percentage if no weight (legacy support)
+    const proteinPercent = goal === "cut" ? 0.35 : goal === "bulk" ? 0.3 : 0.3;
+    proteinGrams = Math.round((calories * proteinPercent) / 4);
+  }
+
+  // Calculate fat
+  const fatCals = calories * fatPercent;
+  const fatGrams = Math.round(fatCals / 9);
+
+  // Remaining calories go to carbs
+  const proteinCals = proteinGrams * 4;
+  const carbCals = Math.max(200, calories - proteinCals - fatCals); // Min 50g carbs
+  const carbGrams = Math.round(carbCals / 4);
+
   return {
-    protein: Math.round((calories * ratios.p) / 4),
-    carbs: Math.round((calories * ratios.c) / 4),
-    fats: Math.round((calories * ratios.f) / 9),
+    protein: proteinGrams,
+    carbs: carbGrams,
+    fats: fatGrams,
   };
 }
