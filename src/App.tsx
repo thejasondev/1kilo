@@ -1,11 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-  useLocation,
-} from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { AuthProvider, useAuth } from "@/features/auth/AuthContext";
 import { db } from "@/lib/storage/db";
@@ -69,9 +63,23 @@ function RouteLoader() {
   );
 }
 
-function ProtectedRoute({ children }: { children: React.ReactElement }) {
+/**
+ * Requires authentication. Redirects to /auth if not logged in.
+ */
+function RequireAuth({ children }: { children: React.ReactElement }) {
+  const { session, isLoading } = useAuth();
+
+  if (isLoading) return <LoadingScreen />;
+  if (!session) return <Navigate to="/auth" replace />;
+
+  return children;
+}
+
+/**
+ * Requires authentication + profile. Redirects to /onboarding if no profile.
+ */
+function RequireProfile({ children }: { children: React.ReactElement }) {
   const { session, isLoading, user } = useAuth();
-  const location = useLocation();
 
   // Use LiveQuery to react immediately to profile creation
   const profile = useLiveQuery(async () => {
@@ -86,14 +94,9 @@ function ProtectedRoute({ children }: { children: React.ReactElement }) {
   if (isLoading || (user && isCheckingProfile)) return <LoadingScreen />;
   if (!session) return <Navigate to="/auth" replace />;
 
-  // Redirect to onboarding if no profile and not already there
-  if (!hasProfile && location.pathname !== "/onboarding") {
+  // Redirect to onboarding if no profile
+  if (!hasProfile) {
     return <Navigate to="/onboarding" replace />;
-  }
-
-  // Redirect to home if has profile and trying to access onboarding
-  if (hasProfile && location.pathname === "/onboarding") {
-    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -118,13 +121,25 @@ function App() {
         <BrowserRouter>
           <Suspense fallback={<RouteLoader />}>
             <Routes>
+              {/* Public route */}
               <Route path="/auth" element={<AuthPage />} />
 
+              {/* Onboarding - requires auth but NO profile required */}
+              <Route
+                path="/onboarding"
+                element={
+                  <RequireAuth>
+                    <OnboardingPage />
+                  </RequireAuth>
+                }
+              />
+
+              {/* Protected routes - require auth + profile */}
               <Route
                 element={
-                  <ProtectedRoute>
+                  <RequireProfile>
                     <AppLayout />
-                  </ProtectedRoute>
+                  </RequireProfile>
                 }
               >
                 <Route path="/" element={<Navigate to="/diary" replace />} />
@@ -133,8 +148,10 @@ function App() {
                 <Route path="/workout/create" element={<CreateRoutinePage />} />
                 <Route path="/progress" element={<ProgressPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/onboarding" element={<OnboardingPage />} />
               </Route>
+
+              {/* Catch-all redirect */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
         </BrowserRouter>
